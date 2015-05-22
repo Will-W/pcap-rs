@@ -8,11 +8,6 @@ fn main() {
         Err(x) => println!("Lookupdev failed: {}", x),
     };
 
-    match pcap::Session::open_live("eth0") {
-        Err(x) => println!("Error: **{}**", x),
-        Ok(_) => println!("Session opened Ok"),
-    };
-
-    // pcap::Session::open_live("eth0").unwrap();
+    let cap = pcap::Session::open_live("eth0").unwrap();
 
 }

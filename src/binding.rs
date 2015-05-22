@@ -481,6 +481,34 @@ impl ::std::default::Default for Struct_itimerval {
     fn default() -> Self { unsafe { ::std::mem::zeroed() } }
 }
 pub type __itimer_which_t = libc::c_int;
+pub type bpf_int32 = libc::c_int;
+pub type bpf_u_int32 = u_int;
+#[repr(C)]
+#[derive(Copy)]
+pub struct Struct_bpf_program {
+    pub bf_len: u_int,
+    pub bf_insns: *mut Struct_bpf_insn,
+}
+impl ::std::clone::Clone for Struct_bpf_program {
+    fn clone(&self) -> Self { *self }
+}
+impl ::std::default::Default for Struct_bpf_program {
+    fn default() -> Self { unsafe { ::std::mem::zeroed() } }
+}
+#[repr(C)]
+#[derive(Copy)]
+pub struct Struct_bpf_insn {
+    pub code: u_short,
+    pub jt: u_char,
+    pub jf: u_char,
+    pub k: bpf_u_int32,
+}
+impl ::std::clone::Clone for Struct_bpf_insn {
+    fn clone(&self) -> Self { *self }
+}
+impl ::std::default::Default for Struct_bpf_insn {
+    fn default() -> Self { unsafe { ::std::mem::zeroed() } }
+}
 pub type FILE = Struct__IO_FILE;
 pub type __FILE = Struct__IO_FILE;
 #[repr(C)]
@@ -618,8 +646,6 @@ pub type __io_close_fn =
     extern "C" fn(__cookie: *mut libc::c_void) -> libc::c_int;
 pub type va_list = __gnuc_va_list;
 pub type fpos_t = _G_fpos_t;
-pub type bpf_int32 = libc::c_int;
-pub type bpf_u_int32 = u_int;
 pub enum Struct_pcap { }
 pub type pcap_t = Struct_pcap;
 pub enum Struct_pcap_dumper { }
@@ -709,8 +735,6 @@ pub type pcap_handler =
     ::std::option::Option<extern "C" fn(arg1: *mut u_char,
                                         arg2: *const Struct_pcap_pkthdr,
                                         arg3: *const u_char) -> ()>;
-pub enum Struct_bpf_program { }
-pub enum Struct_bpf_insn { }
 pub type __va_list_tag = Struct___va_list_tag;
 #[repr(C)]
 #[derive(Copy)]
@@ -765,6 +789,10 @@ extern "C" {
      -> libc::c_int;
     pub fn futimes(__fd: libc::c_int, __tvp: *mut Struct_timeval)
      -> libc::c_int;
+    pub fn bpf_validate(f: *const Struct_bpf_insn, len: libc::c_int)
+     -> libc::c_int;
+    pub fn bpf_filter(arg1: *const Struct_bpf_insn, arg2: *const u_char,
+                      arg3: u_int, arg4: u_int) -> u_int;
     pub fn __underflow(arg1: *mut _IO_FILE) -> libc::c_int;
     pub fn __uflow(arg1: *mut _IO_FILE) -> libc::c_int;
     pub fn __overflow(arg1: *mut _IO_FILE, arg2: libc::c_int)
@@ -1050,10 +1078,6 @@ extern "C" {
                             arg2: *mut libc::c_char) -> libc::c_int;
     pub fn pcap_freealldevs(arg1: *mut pcap_if_t) -> ();
     pub fn pcap_lib_version() -> *const libc::c_char;
-    pub fn bpf_filter(arg1: *const Struct_bpf_insn, arg2: *const u_char,
-                      arg3: u_int, arg4: u_int) -> u_int;
-    pub fn bpf_validate(f: *const Struct_bpf_insn, len: libc::c_int)
-     -> libc::c_int;
     pub fn bpf_image(arg1: *const Struct_bpf_insn, arg2: libc::c_int)
      -> *mut libc::c_char;
     pub fn bpf_dump(arg1: *const Struct_bpf_program, arg2: libc::c_int)

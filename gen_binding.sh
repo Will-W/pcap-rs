@@ -17,4 +17,4 @@ extern "C" {}
 
 EOF
 
-$BINDGEN_EXE -builtins -DPCAP_DONT_INCLUDE_PCAP_BPF_H /usr/include/pcap/pcap.h >> $OUTFILE
+$BINDGEN_EXE -builtins /usr/include/pcap/pcap.h >> $OUTFILE
