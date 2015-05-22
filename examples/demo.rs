@@ -1,5 +1,5 @@
 extern crate pcap;
 
 fn main() {
-    pcap::lib_version();
+    println!("Version: '{}'", pcap::lib_version());
 }

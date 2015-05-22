@@ -8,10 +8,9 @@ use binding::*;
 
 #[test]
 fn it_works() {
-    println!("Hello!");
 }
 
-pub fn lib_version() {
-    let s = unsafe { ffi::CStr::from_ptr(pcap_lib_version()) };
-    println!("{}", s.to_bytes().len());
+pub fn lib_version() -> &'static str {
+    let slice = unsafe { ffi::CStr::from_ptr(pcap_lib_version()) };
+    str::from_utf8(slice.to_bytes()).unwrap()
 }
