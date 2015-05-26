@@ -16,22 +16,32 @@ fn str_to_c(input: &str) -> *const i8 {
     ffi::CString::new(input).unwrap().as_ptr()
 }
 
-pub fn lib_version() -> &'static str {
-    let slice = unsafe { ffi::CStr::from_ptr(pcap_lib_version()) };
+unsafe fn c_to_str(p: *const i8) -> &'static str {
+    let slice = ffi::CStr::from_ptr(p);
     str::from_utf8(slice.to_bytes()).unwrap()
+}
+
+unsafe fn c_to_string(p: *const i8) -> String {
+    c_to_str(p).to_string()
+}
+
+
+pub fn lib_version() -> &'static str {
+    unsafe {
+        c_to_str( pcap_lib_version() )
+    }
 }
 
 pub fn lookupdev() -> Result<String, String> {
     let mut errbuff = [0 as libc::c_char; ERRBUFF_SIZE];
     unsafe {
         let dev = pcap_lookupdev(errbuff.as_mut_ptr());
+
         if dev.is_null() {
-            let slice = ffi::CStr::from_ptr(errbuff.as_ptr());
-            Err(str::from_utf8(slice.to_bytes()).unwrap().to_string())
+            Err( c_to_string(errbuff.as_ptr()) )
         }
         else {
-            let slice = ffi::CStr::from_ptr(dev);
-            Ok(str::from_utf8(slice.to_bytes()).unwrap().to_string())
+            Ok( c_to_string(dev) )
         }
     }
 }
@@ -43,28 +53,29 @@ pub struct Session {
 
 impl Session {
     pub fn open_live(dev: &str) -> Result<Session, String> {
-        let mut errbuff = [0 as libc::c_uchar; ERRBUFF_SIZE];
+        let mut errbuff = [0 as libc::c_char; ERRBUFF_SIZE];
         let handle = unsafe {
-             pcap_open_live(ffi::CString::new(dev).unwrap().as_ptr(),
+             pcap_open_live(str_to_c(dev),
                             libc::consts::os::c95::BUFSIZ as i32,
                             1,
                             1000,
-                            errbuff.as_mut_ptr() as *mut i8
+                            errbuff.as_mut_ptr()
                             )
         };
 
         if handle.is_null() {
-            let slice = str::from_utf8(&errbuff[..]).unwrap();
-            Err(slice.to_owned())
+            Err( unsafe { c_to_string(errbuff.as_ptr()) } )
         }
         else {
-            Ok( Session { handle: handle, dev: dev.to_owned() } )
+            Ok( Session { handle: handle, dev: String::from(dev) } )
         }
     }
 
     pub fn set_filter(&self, expr: &str, netmask: u32) -> Result<(), &str> {
         unsafe {
-            let mut bpf_prog = Struct_bpf_program { bf_len: 0, bf_insns: (std::ptr::null::<Struct_bpf_insn>() as *mut Struct_bpf_insn) };
+            let mut bpf_prog = Struct_bpf_program { bf_len: 0,
+                                                    bf_insns: (std::ptr::null::<Struct_bpf_insn>()
+                                                               as *mut Struct_bpf_insn) };
 
             if -1 == pcap_compile(self.handle,
                                   &mut bpf_prog,
@@ -78,7 +89,7 @@ impl Session {
                     Err("Failed to set filter")
                 }
                 else {
-                    Ok(())
+                    Ok( () )
                 }
             }
         }
