@@ -71,7 +71,21 @@ impl Session {
         }
     }
 
-    pub fn set_filter(&self, expr: &str, netmask: u32) -> Result<(), &str> {
+    pub fn set_filter(&self, expr: &str) -> Result<(), String> {
+
+        let mut errbuff = [0 as libc::c_char; ERRBUFF_SIZE];
+        let mut net: u32 = 0;
+        let mut mask: u32 = 0;
+
+        let ret = unsafe { pcap_lookupnet(str_to_c(&self.dev),
+                                          &mut net,
+                                          &mut mask,
+                                          errbuff.as_mut_ptr()) };
+
+        if ret == -1 {
+            return Err( unsafe { c_to_string(errbuff.as_ptr()) } );
+        }
+
         unsafe {
             let mut bpf_prog = Struct_bpf_program { bf_len: 0,
                                                     bf_insns: (std::ptr::null::<Struct_bpf_insn>()
@@ -81,12 +95,12 @@ impl Session {
                                   &mut bpf_prog,
                                   str_to_c(expr),
                                   0,
-                                  netmask) {
-                Err("Failed to compile expression")
+                                  mask) {
+                Err("Failed to compile expression".to_string())
             }
             else {
                 if -1 == pcap_setfilter(self.handle, &mut bpf_prog) {
-                    Err("Failed to set filter")
+                    Err("Failed to set filter".to_string())
                 }
                 else {
                     Ok( () )
@@ -98,6 +112,7 @@ impl Session {
 
 impl Drop for Session {
     fn drop(&mut self) {
+        println!("Session Closing");
         unsafe {
             pcap_close(self.handle);
         }
