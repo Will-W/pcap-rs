@@ -19,6 +19,6 @@ fn main() {
     cap.set_filter(&filter).unwrap();
 
     loop {
-        cap.next_packet(|data| { println!("len: {:?}", data); } );
+        cap.next_packet(|data, _| { println!("len: {:?}", data); } );
     }
 }

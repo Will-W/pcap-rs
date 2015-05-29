@@ -117,14 +117,18 @@ impl Session {
     }
 
     /// Retrieve the next packet and pass to the closure
-    pub fn next_packet<F>(&self, on_packet: F) -> ()
-        where F : Fn(&[u8]) -> () {
+    ///
+    /// If a packet is available, the closure will be called with 2 args: a
+    /// slice of the data, and the full length of the packet.
+    /// The latter might be less than the slice length if e.g. snaplen was too small.
+    pub fn next_packet<F>(&self, on_packet: F)
+        where F : Fn(&[u8], u32) {
             let mut hdr: Struct_pcap_pkthdr = unsafe { std::mem::uninitialized() };
             unsafe {
                 let data = pcap_next(self.handle, &mut hdr);
                 if !data.is_null() {
-                    let slice: &[u8] = std::slice::from_raw_parts(data, hdr.len as usize);
-                    on_packet(slice);
+                    let slice: &[u8] = std::slice::from_raw_parts(data, hdr.caplen as usize);
+                    on_packet(slice, hdr.len);
                 }
             }
     }
