@@ -25,13 +25,14 @@ unsafe fn c_to_string(p: *const i8) -> String {
     c_to_str(p).to_string()
 }
 
-
+/// Get the pcap library version string
 pub fn lib_version() -> &'static str {
     unsafe {
         c_to_str( pcap_lib_version() )
     }
 }
 
+/// Get the name of the default ethernet device
 pub fn lookupdev() -> Result<String, String> {
     let mut errbuff = [0 as libc::c_char; ERRBUFF_SIZE];
     unsafe {
@@ -46,12 +47,16 @@ pub fn lookupdev() -> Result<String, String> {
     }
 }
 
+/// Encapsulates an instance of a pcap session
+///
+/// Construct with open_live()
 pub struct Session {
     handle: *mut pcap_t,
     dev: String
 }
 
 impl Session {
+    /// Attempts to construct a pcap session on the requested device
     pub fn open_live(dev: &str) -> Result<Session, String> {
         let mut errbuff = [0 as libc::c_char; ERRBUFF_SIZE];
         let handle = unsafe {
@@ -71,12 +76,14 @@ impl Session {
         }
     }
 
+    /// Applies the provided BPF filter to the pcap session
     pub fn set_filter(&self, expr: &str) -> Result<(), String> {
 
         let mut errbuff = [0 as libc::c_char; ERRBUFF_SIZE];
         let mut net: u32 = 0;
         let mut mask: u32 = 0;
 
+        // Get the netmask for the current device.
         let ret = unsafe { pcap_lookupnet(str_to_c(&self.dev),
                                           &mut net,
                                           &mut mask,
@@ -90,7 +97,7 @@ impl Session {
             let mut bpf_prog = Struct_bpf_program { bf_len: 0,
                                                     bf_insns: (std::ptr::null::<Struct_bpf_insn>()
                                                                as *mut Struct_bpf_insn) };
-
+            // Compile and set the filter
             if -1 == pcap_compile(self.handle,
                                   &mut bpf_prog,
                                   str_to_c(expr),
@@ -109,6 +116,7 @@ impl Session {
         }
     }
 
+    /// Retrieve the next packet and pass to the closure
     pub fn next_packet<F>(&self, on_packet: F) -> ()
         where F : Fn(&[u8]) -> () {
             let mut hdr: Struct_pcap_pkthdr = unsafe { std::mem::uninitialized() };
