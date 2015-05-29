@@ -11,4 +11,8 @@ fn main() {
     let cap = pcap::Session::open_live("eth0").unwrap();
 
     cap.set_filter("port 80").unwrap();
+
+    loop {
+        cap.next_packet(|data| { println!("len: {:?}", data); } );
+    }
 }
